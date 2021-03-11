@@ -8,7 +8,30 @@ import (
 	"net/http"
 )
 
-//get titles from url
+// Get titles from urls
+// Example body:
+// {
+//    "urls" : [
+//        "http://google.com",
+//        "yandex.ru",
+//        "http://vk.com",
+//        "http://daryo.uz",
+//        "tes",
+//        "asd"
+//    ]
+// }
+// out:
+// {
+//    "data": [
+//        "Google",
+//        "",
+//        "VKontaktening mobil versiyasi | VKontakte",
+//        "Daryo — yangiliklar daryosidan chetda qolib ketmang!",
+//        "",
+//        ""
+//    ],
+//    "ok": true
+// }
 func GetTitle(c echo.Context) error {
 	m := echo.Map{}
 	if err := c.Bind(&m); err != nil {
@@ -50,11 +73,11 @@ func parse(url string) (*html.Node, error) {
 
 	r, err := http.Get(url)
 	if err != nil {
-		return nil, fmt.Errorf("Cannot get page")
+		return nil, fmt.Errorf("cannot get page")
 	}
 	b, err := html.Parse(r.Body)
 	if err != nil {
-		return nil, fmt.Errorf("Cannot parse page")
+		return nil, fmt.Errorf("cannot parse page")
 	}
 	return b, err
 }

@@ -25,6 +25,7 @@ func init() {
 	//Routes
 	//group -> api v1
 	v1 := e.Group("/api/v1", jsonMiddleware)
+	//get title from url
 	v1.GET("/get/title", controllers.GetTitle)
 
 	//Start server
@@ -32,6 +33,7 @@ func init() {
 
 }
 
+//middleware for check content type
 func jsonMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		if c.Request().Header.Get("Content-Type") == "application/json" {
