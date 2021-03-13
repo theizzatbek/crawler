@@ -4,8 +4,8 @@ import (
 	"crawler/utils"
 	"fmt"
 	"github.com/labstack/echo"
-	"github.com/labstack/gommon/log"
 	"golang.org/x/net/html"
+	"log"
 	"net/http"
 	"sync"
 )
@@ -52,7 +52,7 @@ func GetTitle(c echo.Context) error {
 			var url = urls[i].(string)
 			page, err := parse(url)
 			if err != nil {
-				log.Errorf("cannot get page info url:%s err:%s\n", url, err)
+				log.Printf("cannot get page info url:%s err:%s\n", url, err)
 			} else {
 				title[i] = getTitle(page)
 			}

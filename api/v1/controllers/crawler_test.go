@@ -55,3 +55,18 @@ func TestGetTitle(t *testing.T) {
 	}
 
 }
+
+func BenchmarkGetTitle(b *testing.B) {
+	e := echo.New()
+
+	req := httptest.NewRequest(http.MethodGet, "/", strings.NewReader(body))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	c.SetPath("/api/v1/get/title")
+
+	for i := 0; i < b.N; i++ {
+		GetTitle(c)
+	}
+
+}
