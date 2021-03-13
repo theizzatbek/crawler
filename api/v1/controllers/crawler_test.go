@@ -56,7 +56,8 @@ func TestGetTitle(t *testing.T) {
 
 }
 
-func BenchmarkGetTitle(b *testing.B) {
+func BenchmarkGetTitleReq(b *testing.B) {
+
 	e := echo.New()
 
 	req := httptest.NewRequest(http.MethodGet, "/", strings.NewReader(body))
@@ -66,7 +67,16 @@ func BenchmarkGetTitle(b *testing.B) {
 	c.SetPath("/api/v1/get/title")
 
 	for i := 0; i < b.N; i++ {
-		GetTitle(c)
+		_ = GetTitle(c)
+	}
+
+}
+
+func BenchmarkGetTitle(b *testing.B) {
+	url := "http://google.com"
+	for i := 0; i < b.N; i++ {
+		page, _ := parse(url)
+		_ = getTitle(&page)
 	}
 
 }

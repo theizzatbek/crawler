@@ -4,9 +4,12 @@ import (
 	"crawler/utils"
 	"fmt"
 	"github.com/labstack/echo"
+	"github.com/labstack/gommon/log"
 	"golang.org/x/net/html"
-	"log"
+	"io/ioutil"
 	"net/http"
+	_ "net/http/pprof"
+	"strings"
 	"sync"
 )
 
@@ -46,15 +49,16 @@ func GetTitle(c echo.Context) error {
 	var title = make([]string, length, length)
 	var wg = sync.WaitGroup{}
 
+	wg.Add(length)
 	for i := range urls {
-		wg.Add(1)
+
 		go func(i int) {
 			var url = urls[i].(string)
 			page, err := parse(url)
 			if err != nil {
-				log.Printf("cannot get page info url:%s err:%s\n", url, err)
+				log.Errorf("cannot get page info url:%s err:%s\n", url, err)
 			} else {
-				title[i] = getTitle(page)
+				title[i] = getTitle(&page)
 			}
 			wg.Done()
 		}(i)
@@ -66,30 +70,36 @@ func GetTitle(c echo.Context) error {
 	return c.JSON(http.StatusOK, msg)
 }
 
-func getTitle(n *html.Node) string {
-	var title string
-	if n.Type == html.ElementNode && n.Data == "title" {
-		return n.FirstChild.Data
-	}
-	for c := n.FirstChild; c != nil; c = c.NextSibling {
-		title = getTitle(c)
-		if title != "" {
-			break
-		}
-	}
-	return title
-}
-
-func parse(url string) (*html.Node, error) {
+func parse(url string) (string, error) {
 
 	r, err := http.Get(url)
 	if err != nil {
-		return nil, fmt.Errorf("cannot get page: %v", err)
+		return "", fmt.Errorf("cannot get page: %v", err)
 	}
-	defer r.Body.Close()
-	b, err := html.Parse(r.Body)
-	if err != nil {
-		return nil, fmt.Errorf("cannot parse page")
+	defer func() {
+		_ = r.Body.Close()
+	}()
+
+	b, err := ioutil.ReadAll(r.Body)
+
+	return string(b), err
+}
+
+func getTitle(h *string) string {
+	r := strings.NewReader(*h)
+	tokenizer := html.NewTokenizer(r)
+	for {
+		tt := tokenizer.Next()
+		if tt == html.ErrorToken {
+			return ""
+		}
+		if tt == html.StartTagToken {
+			token := tokenizer.Token()
+			if token.Data == "title" {
+				tokenizer.Next()
+				return tokenizer.Token().Data
+			}
+		}
+
 	}
-	return b, err
 }
