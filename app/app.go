@@ -5,7 +5,6 @@ import (
 	"crawler/utils"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
-	"log"
 	"net/http"
 )
 
@@ -29,9 +28,6 @@ func init() {
 	//get title from url
 	v1.GET("/get/title", controllers.GetTitle)
 
-	go func() {
-		log.Println(http.ListenAndServe("localhost:6060", nil))
-	}()
 	//Start server
 	e.Logger.Fatal(e.Start(":8080"))
 
