@@ -7,6 +7,7 @@ import (
 	"github.com/labstack/gommon/log"
 	"golang.org/x/net/html"
 	"net/http"
+	"sync"
 )
 
 // Get titles from urls
@@ -41,16 +42,25 @@ func GetTitle(c echo.Context) error {
 
 	var msg = utils.Message()
 	urls := m["urls"].([]interface{})
-	var title = make([]string, len(urls), len(urls))
+	var length = len(urls)
+	var title = make([]string, length, length)
+	var wg = sync.WaitGroup{}
+
 	for i := range urls {
-		var url = urls[i].(string)
-		page, err := parse(url)
-		if err != nil {
-			log.Errorf("cannot get page info url:%s err:%s\n", url, err)
-			continue
-		}
-		title[i] = getTitle(page)
+		wg.Add(1)
+		go func(i int) {
+			var url = urls[i].(string)
+			page, err := parse(url)
+			if err != nil {
+				log.Errorf("cannot get page info url:%s err:%s\n", url, err)
+			} else {
+				title[i] = getTitle(page)
+			}
+			wg.Done()
+		}(i)
+
 	}
+	wg.Wait()
 	msg["data"] = title
 
 	return c.JSON(http.StatusOK, msg)
@@ -74,8 +84,9 @@ func parse(url string) (*html.Node, error) {
 
 	r, err := http.Get(url)
 	if err != nil {
-		return nil, fmt.Errorf("cannot get page")
+		return nil, fmt.Errorf("cannot get page: %v", err)
 	}
+	defer r.Body.Close()
 	b, err := html.Parse(r.Body)
 	if err != nil {
 		return nil, fmt.Errorf("cannot parse page")
